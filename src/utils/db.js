@@ -20,6 +20,7 @@ let proConfig = {
 }
 
 const sequelize = new Sequelize({
+    dialect: 'postgres',
     connectionString: process.env.NODE_ENV === 'production' ? proConfig : devConfig
 })
 
