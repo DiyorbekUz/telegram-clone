@@ -17,7 +17,7 @@ let devConfig = `postgres://${process.env.PG_USER}:${process.env.PG_PASSWORD}@${
 
 let proConfig = {
     connectionString: process.env.DATABASE_URL,
-}
+} 
 
 const sequelize = new Sequelize({
     dialect: 'postgres',
