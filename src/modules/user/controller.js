@@ -93,7 +93,7 @@ const POST_REGISTER = async (req, res, next) => {
 
 const GET_USERS = async (req, res, next) => {
     try {
-        const users = await req.models.User.findAll({
+        let users = await req.models.User.findAll({
             where: {
                 user_id: {
                     [Op.ne]: req.userId
@@ -101,6 +101,17 @@ const GET_USERS = async (req, res, next) => {
             },
             attributes: ['user_id', 'username', 'user_img', 'socket_id']
         })
+
+        users = await Promise.all(JSON.parse(JSON.stringify(users)).map(async user => {
+            user.unreadMessages = await req.models.Message.count({
+                where: {
+                    message_from: user.user_id,
+                    message_to: req.userId,
+                    message_read: false
+                }
+            })
+            return user
+        }))
 
         return res.json(users)
     } catch (error) {

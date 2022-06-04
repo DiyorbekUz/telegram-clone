@@ -4,7 +4,13 @@ form.onsubmit = async event => {
     const username = usernameInput.value.trim()
     const password = passwordInput.value.trim()
 
-    if (!username || !password) return
+    if (!username) {
+        return messageText.textContent = 'username is required!'
+    }
+
+    if (!password) {
+        return messageText.textContent = 'password is required!'
+    }
     
     let response = await request('/login', 'POST', {
         username,
@@ -16,5 +22,13 @@ form.onsubmit = async event => {
         window.location = '/'
     } else {
         messageText.textContent = response.message
+    }
+}
+
+showButton.onclick = () => {
+    if (passwordInput.type === 'text') {
+        passwordInput.type = 'password'
+    } else if (passwordInput.type === 'password') {
+        passwordInput.type = 'text'
     }
 }

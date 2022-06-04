@@ -5,7 +5,17 @@ form.onsubmit = async event => {
     const password = passwordInput.value.trim()
     const file = uploadInput.files[0]
 
-    if (!username || !password || !file) return
+    if (!username) {
+        return messageText.textContent = 'username is required!'
+    }
+
+    if (!password) {
+        return messageText.textContent = 'password is required!'
+    }
+
+    if (!file) {
+        return messageText.textContent = 'profile picture must be selected!'
+    }
 
     const formData = new FormData()
     formData.append('username', username)
@@ -19,5 +29,13 @@ form.onsubmit = async event => {
         window.location = '/'
     } else {
         messageText.textContent = response.message
+    }
+}
+
+showButton.onclick = () => {
+    if (passwordInput.type === 'text') {
+        passwordInput.type = 'password'
+    } else if (passwordInput.type === 'password') {
+        passwordInput.type = 'text'
     }
 }

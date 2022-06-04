@@ -5,7 +5,7 @@ export default (error, req, res, next) => {
     console.log('error name: ', error.name)
     console.log('error message: ', error.message)
 
-    const lofFilePath = path.join(process.cwd(), 'logger.txt')
+    const lofFilePath = path.join(process.cwd(), 'log.txt')
     fs.appendFileSync(
         lofFilePath,
         `${req.url}___${req.method}___${Date.now()}___${error.name}___${error.message}\n`

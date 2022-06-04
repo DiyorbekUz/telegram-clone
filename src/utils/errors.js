@@ -27,7 +27,7 @@ export class BadRequestError extends BaseError {
 
 export class ForbiddenError extends BaseError {
     constructor(message) {
-        super(400, message)
+        super(403, message)
     }
 }
 

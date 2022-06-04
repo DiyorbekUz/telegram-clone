@@ -1,4 +1,3 @@
-import checkToken from '../../middlewares/checkToken.js'
 import { Router } from 'express'
 import CT from './controller.js'
 

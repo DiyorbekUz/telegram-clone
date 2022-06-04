@@ -18,6 +18,12 @@ export default async ({ sequelize }) => {
         message_type: {
             type: DataTypes.STRING,
             allowNull: false
+        },
+
+        message_read: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
         }
     }, {
         sequelize,

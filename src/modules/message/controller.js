@@ -23,7 +23,7 @@ const POST_MESSAGES = async (req, res, next) => {
                 message_from: req.userId,
                 message_to: messageTo,
             })
-        
+
         } else {
             message = await req.models.Message.create({
                 message_body: messageBody,
@@ -47,7 +47,16 @@ const POST_MESSAGES = async (req, res, next) => {
             }
         })
 
-        process.io.to(message.message_to.socket_id).emit('message:new', message)
+        const unreadMessages = await req.models.Message.count({
+            where: {
+                message_from: req.userId,
+                message_to: messageTo,
+                message_read: false
+            }
+        })
+
+        process.io.to(message.message_to.socket_id).emit('new message', { message, unreadMessages })
+        process.io.to(message.message_to.socket_id).emit('stop sending file', { from: message.message_from.user_id })
         return res.status(200).json({
             status: 200,
             message: 'The message is sent!',

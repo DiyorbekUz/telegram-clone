@@ -4,7 +4,8 @@ const socket = io({
     }
 })
 
-let selectedUserId
+const lastSelectedUserId = () => window.localStorage.getItem('lastSelectedUserId')
+let selected
 
 async function getUsers() {
     const users = await request('/users')
@@ -16,32 +17,18 @@ async function getMessages(userId) {
     renderMessages(messages, userId)
 }
 
-async function postMessage(body, type) {
-    if (type === 'text') {
-        const response = await request('/messages', 'POST', {
-            messageTo: selectedUserId,
-            messageBody: body
-        })
-
-        if(response.status > 400) {
-            return alert(response.message)
-        }
-
-        renderMessages([response.data])
-    } else if (type === 'file') {
-        const formData = new FormData()
-        formData.append('messageTo', selectedUserId)
+async function postMessage(messageBody, type) {
+    const formData = new FormData()
+    formData.append('messageTo', lastSelectedUserId())
+    formData.append('messageBody', messageBody || 'hello world')
+    if (type === 'file') {
         formData.append('messageBody', 'hello world')
-        formData.append('file', body)
-
-        const response = await request('/messages', 'POST', formData)
-
-        if(response.status > 400) {
-            return alert(response.message)
-        }
-
-        renderMessages([response.data])
+        formData.append('file', messageBody)
     }
+    
+    const response = await request('/messages', 'POST', formData)
+    if (response.status === 200) renderMessages([response.data])
+    else alert(response.message)
 }
 
 async function renderMessages(messages, hisId) {
@@ -58,15 +45,17 @@ async function renderMessages(messages, hisId) {
         const minute = date.getMinutes().toString().padStart(2, 0)
         const time = hour + ':' + minute
 
+        const div = document.createElement('div')
+        div.classList.add('msg-wrapper')
+        !isHisMessage && div.classList.add('msg-from')
+
         if (message.message_type === 'plain/text') {
-            chatsMain.innerHTML += `
-                <div class="msg-wrapper ${isHisMessage ? '' : 'msg-from'}">
-                    <img src="${img}" alt="profile-picture">
-                    <div class="msg-text">
-                        <p class="msg-author">${username}</p>
-                        <p class="msg">${message.message_body}</p>
-                        <p class="time">${time}</p>
-                    </div>
+            div.innerHTML += `
+                <img src="${img}" alt="profile-picture">
+                <div class="msg-text">
+                    <p class="msg-author">${username}</p>
+                    <p class="msg">${message.message_body}</p>
+                    <p class="time">${time}</p>
                 </div>
             `
         } else {
@@ -79,25 +68,21 @@ async function renderMessages(messages, hisId) {
                 </li>
             `
 
-
-            chatsMain.innerHTML += `
-                <div class="msg-wrapper ${isHisMessage ? '' : 'msg-from'}">
-                    <img src="${img}" alt="profile-picture">
-                    <div class="msg-text">
-                        <p class="msg-author">${username}</p>
-                        <object paused data="${file}" type="${message.message_type}" class="msg object-class"></object>
-                        <a href="${downloadLink}">
-                            <img src="./img/download.png" width="25px">
-                        </a>
-                        <p class="time">${time}</p>
-                    </div>
+            div.innerHTML += `
+                <img src="${img}" alt="profile-picture">
+                <div class="msg-text">
+                    <p class="msg-author">${username}</p>
+                    <object stopped data="${file}" type="${message.message_type}" class="msg object-class"></object>
+                    <a href="${downloadLink}">
+                        <img src="./img/download.png" width="25px">
+                    </a>
+                    <p class="time">${time}</p>
                 </div>
             `
         }
+
+        chatsMain.append(div);
     }
-    chatsMain.scrollTo({
-        top: 1000000000,
-    })
 }
 
 async function renderUsers(users) {
@@ -107,8 +92,14 @@ async function renderUsers(users) {
         chatsList.innerHTML += `
             <li class="chats-item"
                 onclick="(async function () {
-                    await setChat('${userImg}', '${user.username}', ${user.user_id})
+                    window.localStorage.setItem('lastSelectedUserId', ${user.user_id})
+                    selected = true
 
+                    chatPhoto.src = '${userImg}'
+                    chatUsername.textContent = '${user.username}'
+
+                    setRead(${user.user_id})
+                    
                     chatsMain.innerHTML = null
                     uploadedFiles.innerHTML = null
                     await getMessages(${user.user_id})
@@ -116,12 +107,21 @@ async function renderUsers(users) {
             >
                 <img src="${userImg}" alt="profile-picture">
                 <p>
-                    ${user.username} 
-                    <span data-id="${user.user_id}" class="${user.socket_id ? 'online-indicator' : ''}"></span>
+                    ${user.username}
+                    <span data-actionid="${user.user_id}" id="personAction"></span> 
+                    <span data-id="${user.user_id}" class="indicator ${user.socket_id ? 'online-indicator' : ''}">
+                        ${user.unreadMessages > 0 ? user.unreadMessages : ''}
+                    </span>
                 </p>
             </li>
         `
     }
+}
+
+function setRead(userId) {
+    socket.emit('messages read', { from: userId })
+    const span = document.querySelector(`[data-id='${userId}']`)
+    span.textContent = null
 }
 
 async function renderAvatarData() {
@@ -129,13 +129,6 @@ async function renderAvatarData() {
     let response = await request('/getUsername/' + token)
     profileUsername.textContent = response.username
 
-}
-
-function setChat(img, username, userId) {
-    chatPhoto.src = img
-    chatUsername.textContent = username
-    selectedUserId = userId
-    form.style.display = 'flex'
 }
 
 logOut.onclick = () => {
@@ -146,36 +139,42 @@ logOut.onclick = () => {
 form.onsubmit = async event => {
     event.preventDefault()
 
-    if (textInput.value.trim().length > 250) {
-        return alert('invalid input!')
+    if (textInput.value.trim() && selected) {
+        await postMessage(textInput.value, 'text')
+        form.reset()
     }
-
-    if (!textInput.value.trim()) {
-        return textInput.value = null
-    }
-
-    await postMessage(textInput.value, 'text')
-    form.reset()
 }
 
-uploads.onchange = event => {
-    if (uploads.files[0].size > 50 * 1024 * 1024) {
-        return alert('Invalid file size!')
+uploads.onchange = async event => {
+    const file = uploads.files[0]
+
+    if (file.size > 50 * 1024 * 1024) {
+        return alert('File size must not be larger than 50MB!')
     }
 
-    socket.emit('user:filing', { to: selectedUserId })
-    postMessage(uploads.files[0], 'file')
-    form.reset()
+    if (selected) {
+        socket.emit('start sending file', { to: lastSelectedUserId() })
+        await postMessage(uploads.files[0], 'file')
+        form.reset()
+    }
 }
 
-let setTimeoutId
-textInput.onkeyup = event => {
-    if (setTimeoutId) return 
+let timeOutId
+textInput.onkeyup = () => {
+    if (!selected || !lastSelectedUserId()) {
+        textInput.value = ''
+        return alert('select a chat first!')
+    }
 
-    socket.emit('user:typing', { to: selectedUserId })
-    setTimeoutId = setTimeout(() => {
-        socket.emit('user:stopping', { to: selectedUserId })
-        setTimeoutId = null
+    if (timeOutId) return
+
+    socket.emit('start typing', { to: lastSelectedUserId() })
+
+    timeOutId = setTimeout(() => {
+        clearTimeout(timeOutId)
+        timeOutId = undefined
+
+        socket.emit('stop typing', { to: lastSelectedUserId() })
     }, 2000)
 }
 
@@ -184,39 +183,58 @@ socket.on('exit', () => {
     window.location = '/login'
 })
 
-socket.on('user:online', ({ userId }) => {
-    const span = document.querySelector(`[data-id='${userId}']`)
-    span.classList.add('online-indicator')
-})
-
-socket.on('user:offline', ({ userId }) => {
+socket.on('user offline', ({ userId }) => {
     const span = document.querySelector(`[data-id='${userId}']`)
     span.classList.remove('online-indicator')
 })
 
-socket.on('message:new', (message) => {
-    chatAction.textContent = null
+socket.on('user online', ({ userId }) => {
+    const span = document.querySelector(`[data-id='${userId}']`)
+    span.classList.add('online-indicator')
+})
 
-    if (message.message_from.user_id == selectedUserId) {
-        renderMessages([message], selectedUserId)
+socket.on('new message', ({ message, unreadMessages }) => {
+    if (lastSelectedUserId() == message.message_from.user_id) {
+        renderMessages([message], message.message_from.user_id)
+    } else {
+        const span = document.querySelector(`[data-id='${message.message_from.user_id}']`)
+        span.textContent = unreadMessages
     }
 })
 
-socket.on('user:typing', ({ from }) => {
-    if (from == selectedUserId) {
-        chatAction.textContent = 'is typing...'
+socket.on('start typing', ({ from }) => {
+    if (lastSelectedUserId() == from && selected) {
+        chatUsernameAction.textContent = 'is typing...'
+    } else {
+        const span = document.querySelector(`[data-actionid='${from}']`)
+        span.textContent = 'is typing...'
     }
 })
 
-socket.on('user:stopping', ({ from }) => {
-    if (from == selectedUserId) {
-        chatAction.textContent = ''
+socket.on('stop typing', ({ from }) => {
+    if (lastSelectedUserId() == from && selected) {
+        chatUsernameAction.textContent = ''
+    } else {
+        const span = document.querySelector(`[data-actionid='${from}']`)
+        span.textContent = ''
     }
 })
 
-socket.on('user:filing', ({ from }) => {
-    if (from == selectedUserId) {
-        chatAction.textContent = 'is sending a file...'
+socket.on('start sending file', ({ from }) => {
+    if (lastSelectedUserId() == from && selected) {
+        chatUsernameAction.textContent = 'is sending file...'
+    } else {
+        const span = document.querySelector(`[data-actionid='${from}']`)
+        span.textContent = 'is sending file...'
+    }
+})
+
+socket.on('stop sending file', ({ from }) => {
+    if (lastSelectedUserId() == from && selected) {
+        chatUsernameAction.textContent = ''
+    } else {
+        const span = document.querySelector(`[data-actionid='${from}']`)
+        span.textContent = ''
     }
 })
 

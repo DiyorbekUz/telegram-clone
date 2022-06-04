@@ -1,6 +1,5 @@
 async function request(path, method, body) {
     try {
-        
         const headers = {
             token: window.localStorage.getItem('token')
         }
@@ -15,6 +14,11 @@ async function request(path, method, body) {
             headers,
             body,
         })
+
+        if (response.status === 403) {
+            window.localStorage.clear()
+            window.location = '/login'
+        }
 
         return await response.json()
 
