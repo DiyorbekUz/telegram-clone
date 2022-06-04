@@ -86,6 +86,7 @@ async function renderMessages(messages, hisId) {
 }
 
 async function renderUsers(users) {
+    chatsList.innerHTML = ''
     for (let user of users) {
         const userImg = new String(`/getFile/${user.user_img}/${token}`)
         
@@ -160,7 +161,7 @@ uploads.onchange = async event => {
 }
 
 let timeOutId
-textInput.onkeyup = () => {
+textInput.onkeyup = (event) => {
     if (!selected || !lastSelectedUserId()) {
         textInput.value = ''
         return alert('select a chat first!')
@@ -168,7 +169,9 @@ textInput.onkeyup = () => {
 
     if (timeOutId) return
 
-    socket.emit('start typing', { to: lastSelectedUserId() })
+    if (event.keyCode != 13) {
+        socket.emit('start typing', { to: lastSelectedUserId() })
+    }
 
     timeOutId = setTimeout(() => {
         clearTimeout(timeOutId)
@@ -181,6 +184,11 @@ textInput.onkeyup = () => {
 socket.on('exit', () => {
     window.localStorage.clear()
     window.location = '/login'
+})
+
+socket.on('new user', async () => {
+    console.log('keldi');
+    await getUsers()
 })
 
 socket.on('user offline', ({ userId }) => {
@@ -206,8 +214,12 @@ socket.on('start typing', ({ from }) => {
     if (lastSelectedUserId() == from && selected) {
         chatUsernameAction.textContent = 'is typing...'
     } else {
-        const span = document.querySelector(`[data-actionid='${from}']`)
-        span.textContent = 'is typing...'
+        console.log(selected, lastSelectedUserId(), from);
+        if(lastSelectedUserId() != from) {
+            const span = document.querySelector(`[data-actionid='${from}']`)
+            span.textContent = 'is typing...'
+        }
+            
     }
 })
 

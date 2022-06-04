@@ -55,7 +55,8 @@ const POST_REGISTER = async (req, res, next) => {
     try {
         const { username, password } = req.body
         const { file } = req.files
-
+        console.log(process.socket);
+        
         if (file.size > 10 * 1024 * 1024) {
             throw new ValidationError('Invalid file size!')
         }
@@ -72,7 +73,8 @@ const POST_REGISTER = async (req, res, next) => {
             password: sha256(password),
             user_img: fileName
         })
-
+        
+        process.socket.broadcast.emit('new user', { user })
         return res.status(200).json({
             status: 200,
             message: 'The user successfully registered!',

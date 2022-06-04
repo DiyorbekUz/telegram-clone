@@ -7,3 +7,4 @@
 /login___POST___1654381501782___TypeError___Cannot read properties of undefined (reading 'User')
 /login___POST___1654381592403___TypeError___Cannot read properties of undefined (reading 'User')
 /login___POST___1654381646251___TypeError___Cannot read properties of undefined (reading 'User')
+/register___POST___1654384419270___TypeError___Cannot read properties of undefined (reading 'emit')
