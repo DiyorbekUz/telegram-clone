@@ -34,12 +34,6 @@ export default async ({ sequelize }) => {
         underscored: true
     })
 
-    await Message.belongsTo(sequelize.models.User, {
-        foreignKey: 'message_to',
-    })
 
-    await Message.belongsTo(sequelize.models.User, {
-        foreignKey: 'message_from',
-    })
 }
 

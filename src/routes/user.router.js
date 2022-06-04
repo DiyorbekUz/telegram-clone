@@ -1,7 +1,7 @@
-import validator from '../../middlewares/validation.js'
-import checkToken from '../../middlewares/checkToken.js'
+import validator from '../middlewares/validation.middleware.js'
+import checkToken from '../middlewares/checkToken.middleware.js'
 import { Router } from 'express'
-import CT from './controller.js'
+import CT from '../controllers/user.controller.js'
 
 const router = Router()
 

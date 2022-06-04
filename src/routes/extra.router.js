@@ -1,6 +1,6 @@
-import checkToken from '../../middlewares/checkToken.js'
+import checkToken from '../middlewares/checkToken.middleware.js'
 import { Router } from 'express'
-import CT from './controller.js'
+import CT from '../controllers/extra.controller.js'
 
 const router = Router()
 

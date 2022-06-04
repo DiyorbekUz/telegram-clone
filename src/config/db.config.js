@@ -1,7 +1,6 @@
 import { Sequelize } from 'sequelize'
+import models from '../models/index.js';
 
-import UserModel from '../models/user.js'
-import MessageModel from '../models/message.js'
 
 const sequelize = new Sequelize({
     dialect: 'postgres',
@@ -18,8 +17,7 @@ export default async function () {
         await sequelize.authenticate()
         console.log('Connection has been established successfully.')
 
-        await UserModel({ sequelize })
-        await MessageModel({ sequelize })
+        await models({sequelize})
 
         await sequelize.sync({ alter: true })
 

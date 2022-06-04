@@ -24,6 +24,7 @@ const POST_LOGIN = async (req, res, next) => {
     try {
         const { username, password } = req.body
 
+        console.log(req.models);
         const user = await req.models.User.findOne({
             where: {
                 username,

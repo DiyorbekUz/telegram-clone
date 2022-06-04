@@ -1,5 +1,5 @@
-import errorHandler from "./middlewares/errorHandler.js"
-import logger from "./middlewares/logger.js"
+import errorHandler from "./middlewares/errorHandler.middleware.js";
+import logger from "./middlewares/logger.middleware.js"
 import fileUpload from "express-fileupload"
 import { createServer } from "http"
 import { Server } from "socket.io"
@@ -7,16 +7,20 @@ import JWT from "./utils/jwt.js"
 import express from "express"
 import path from "path"
 import ejs from "ejs"
-import "./config.js"
-import db from "./utils/db.js"
-import mock from './mockdata.js'
+import "./config/index.js"
+import db from "./config/db.config.js"
+import mock from './utils/mockdata.js'
 
-import apiRoutes from './modules/index.js'
+import apiRoutes from './routes/index.js'
 
 !async function () {
     const app = express()
 
     const database = await db()
+    app.use((req, res, next) => {
+        req.models = database.models
+        next()
+    })
     mock({ sequelize: database })
 
     app.engine('html', ejs.renderFile)
@@ -28,7 +32,7 @@ import apiRoutes from './modules/index.js'
     app.use(fileUpload())
     app.use(express.json())
     app.use((req, res, next) => {
-        req.models = database.models
+        req.    els = database.models
         next()
     })
 
@@ -107,7 +111,7 @@ import apiRoutes from './modules/index.js'
         })
     })
 
-    httpServer.listen(process.env.PORT, () => console.log('server ready at *' + process.env.PORT))
+    httpServer.listen(process.env.PORT, () => console.log('server ready at http://localhost:' + process.env.PORT))
 }()
 
 
