@@ -3,6 +3,7 @@ import logger from "./middlewares/logger.js"
 import fileUpload from "express-fileupload"
 import { createServer } from "http"
 import { Server } from "socket.io"
+import JWT from "./utils/jwt.js"
 import express from "express"
 import path from "path"
 import ejs from "ejs"
@@ -11,6 +12,9 @@ import db from "./utils/db.js"
 import mock from './mockdata.js'
 
 import apiRoutes from './modules/index.js'
+
+import authHandler from './socket/authentication.js'
+import messageHandler from './socket/message.js'
 
 !async function () {
     const app = express()
@@ -43,8 +47,12 @@ import apiRoutes from './modules/index.js'
     const httpServer = createServer(app)
     const io = new Server(httpServer)
 
-    io.on("connection", (socket) => {
-        // ...
+    io.on("connection", async (socket) => {
+        process.io = io
+        process.socket = socket
+        
+        authHandler(io, socket, database)
+        messageHandler(io, socket, database)
     })
 
     httpServer.listen(process.env.PORT, () => console.log('server ready at *' + process.env.PORT))

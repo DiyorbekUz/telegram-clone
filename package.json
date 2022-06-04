@@ -27,13 +27,5 @@
     "sha256": "^0.2.0",
     "socket.io": "^4.5.1",
     "socket.io-client": "^4.5.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/DiyorbekUz/telegram-clone.git"
-  },
-  "bugs": {
-    "url": "https://github.com/DiyorbekUz/telegram-clone/issues"
-  },
-  "homepage": "https://github.com/DiyorbekUz/telegram-clone#readme"
+  }
 }

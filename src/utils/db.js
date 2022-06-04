@@ -10,7 +10,6 @@ const sequelize = new Sequelize({
     host: process.env.PG_HOST,
     port: process.env.PG_PORT,
     database: process.env.PG_DATABASE,
-    // connectionString: "postgres://lupplezh:ijwZzwYrUdN_QN64gPSeW5N_h47Li_xk@arjuna.db.elephantsql.com/lupplezh",
     logging: false
 })
 
